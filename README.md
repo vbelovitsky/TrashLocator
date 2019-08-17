@@ -1,0 +1,2 @@
+# TrashLocator
+JavaBootCamp project
