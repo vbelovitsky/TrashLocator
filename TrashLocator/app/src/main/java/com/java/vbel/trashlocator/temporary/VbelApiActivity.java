@@ -12,7 +12,7 @@
 //import com.java.vbel.trashlocator.R;
 //import com.java.vbel.trashlocator.models.Message;
 //import com.java.vbel.trashlocator.models.Paper;
-//import com.java.vbel.trashlocator.models.Post;
+//import com.java.vbel.trashlocator.temporary.Post;
 //import com.java.vbel.trashlocator.network.NetworkService;
 //
 //import java.net.UnknownHostException;

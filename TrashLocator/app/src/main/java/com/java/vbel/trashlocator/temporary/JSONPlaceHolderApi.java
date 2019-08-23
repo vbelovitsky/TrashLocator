@@ -1,7 +1,5 @@
 package com.java.vbel.trashlocator.temporary;
 
-import com.java.vbel.trashlocator.models.Post;
-
 import java.util.List;
 
 import retrofit2.Call;

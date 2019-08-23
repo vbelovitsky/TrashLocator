@@ -13,13 +13,10 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.java.vbel.trashlocator.models.Message;
 import com.java.vbel.trashlocator.models.Point;
 import com.java.vbel.trashlocator.network.NetworkService;
-import com.java.vbel.trashlocator.models.Post;
 import com.java.vbel.trashlocator.R;
 
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,7 +37,6 @@ public class ResultActivity extends AppCompatActivity {
     private String strLabels;
 
     private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
-
 
     private ConstraintLayout resultLayout;
     private TextView resultText;
@@ -125,46 +121,12 @@ public class ResultActivity extends AppCompatActivity {
     }
 
 
-//    private void sendPoint(){
-//        Point newPoint = new Point();
-//        newPoint.setUserId(0);
-//        newPoint.setDate(strDate);
-//        newPoint.setCoordinates(coordinates);
-//        newPoint.setCategory(strCategory);
-//        NetworkService.getInstance(BASE_TEST_URL)
-//            .getTestApi()
-//            .postPoint(newPoint)
-//            .enqueue(new Callback<Message>() {
-//                @Override
-//                public void onResponse(@NonNull Call<Message> call, @NonNull Response<Message> response) {
-//                    resultText.setText("Ваш запрос отправлен");
-//                    resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightGreen));
-//                    resultButton.setImageDrawable(getDrawable(R.drawable.exit));
-//                    resultButton.setOnClickListener(new View.OnClickListener() {
-//                        @Override
-//                        public void onClick(View v) {
-//                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-//                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                            startActivity(intent);
-//
-//                        }
-//                    });
-//                }
-//                @Override
-//                public void onFailure(@NonNull Call<Message> call,@NonNull Throwable t) {
-//                    resultText.setText("Ошибка отправки");
-//                    resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightRed));
-//                    t.printStackTrace();
-//                }
-//            });
-//    }
-
     private void sendPoint(){
         Point newPoint = new Point();
         newPoint.setUserId(0);
         newPoint.setDate(strDate);
-        newPoint.setCoordinates(coordinates);
+        newPoint.setLatitude(coordinates[0]);
+        newPoint.setLongitude(coordinates[1]);
         newPoint.setCategory(strCategory);
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
@@ -193,7 +155,6 @@ public class ResultActivity extends AppCompatActivity {
                     }
                 });
     }
-
 
 
 }

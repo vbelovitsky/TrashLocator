@@ -342,7 +342,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private void setMarkers(List<Point> points){
         for(Point point: points){
             mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(point.getCoordinates()[0],point.getCoordinates()[1]))
+                    .position(new LatLng(point.getLatitude(),point.getLongitude()))
                     .title(point.getCategory())
                     .snippet("User: " + point.getUserId()+", "+point.getDate()));
         }

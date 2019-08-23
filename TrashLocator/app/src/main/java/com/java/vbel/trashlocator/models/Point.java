@@ -5,6 +5,10 @@ import com.google.gson.annotations.SerializedName;
 
 public class Point {
 
+    @SerializedName("id")
+    @Expose
+    private long id;
+
     @SerializedName("userId")
     @Expose
     private long userId;
@@ -13,9 +17,13 @@ public class Point {
     @Expose
     private String date;
 
-    @SerializedName("coordinates")
+    @SerializedName("latitude")
     @Expose
-    private double[] coordinates;
+    private double latitude;
+
+    @SerializedName("longitude")
+    @Expose
+    private double longitude;
 
     @SerializedName("category")
     @Expose
@@ -23,14 +31,20 @@ public class Point {
 
 
 
-
-
-    public double[] getCoordinates() {
-        return coordinates;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setCoordinates(double[] coordinates) {
-        this.coordinates = coordinates;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     public String getDate() {

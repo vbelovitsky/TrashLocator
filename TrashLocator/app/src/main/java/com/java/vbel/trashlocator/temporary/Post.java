@@ -1,4 +1,4 @@
-package com.java.vbel.trashlocator.models;
+package com.java.vbel.trashlocator.temporary;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
