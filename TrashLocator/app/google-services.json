@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "167772769055",
+    "firebase_url": "https://trashlocator-38a00.firebaseio.com",
+    "project_id": "trashlocator-38a00",
+    "storage_bucket": "trashlocator-38a00.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167772769055:android:c59ab26f9e8e5a93",
+        "android_client_info": {
+          "package_name": "com.java.vbel.trashlocator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "167772769055-bb8f4mh1l1uqo91o9gn3kopp9j1p8tgv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSyC5R57oHz2qTiTtBhzrJxovKFYOgFrc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "167772769055-bb8f4mh1l1uqo91o9gn3kopp9j1p8tgv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
