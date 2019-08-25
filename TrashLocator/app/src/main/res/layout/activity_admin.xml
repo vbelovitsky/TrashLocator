@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".activities.AdminActivity">
+
+    <fragment
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:id="@+id/map">
+    </fragment>
+
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_margin="10dp"
+        android:layout_marginTop="44dp"
+        android:gravity="center"
+        android:text="На данный момент готово отметок:"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:background="@color/colorWhite"
+        app:layout_constraintTop_toTopOf="@+id/map"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <TextView
+        android:id="@+id/pointCount"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:gravity="center"
+        android:background="@color/colorWhite"
+        android:text="1386"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintTop_toBottomOf="@+id/textView2"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <EditText
+        android:id="@+id/editNumClusters"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/kMeansButton"
+        tools:layout_editor_absoluteX="0dp"
+        android:background="@color/colorWhite"
+        android:hint="Введите количество точек сбора"/>
+
+    <Button
+        android:id="@+id/kMeansButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="32dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:text="Показать рекоммендации"
+        android:background="@color/colorWhite"
+        app:layout_constraintBottom_toBottomOf="@+id/map"
+        tools:layout_editor_absoluteX="0dp"
+        android:enabled="false"/>
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

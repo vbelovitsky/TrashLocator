@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.time.LocalDateTime;
 
-public class PostSend {
+public class PointSend {
 
     @SerializedName("userId")
     @Expose
@@ -25,7 +25,7 @@ public class PostSend {
 
     @SerializedName("date")
     @Expose
-    private LocalDateTime date;
+    private String date;
 
 
 
@@ -61,11 +61,11 @@ public class PostSend {
         this.lng = lng;
     }
 
-    public LocalDateTime getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(LocalDateTime date) {
+    public void setDate(String date) {
         this.date = date;
     }
 }

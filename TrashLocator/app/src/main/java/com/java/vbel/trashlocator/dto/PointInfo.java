@@ -13,7 +13,7 @@ public class PointInfo {
 
     @SerializedName("categoryTitle")
     @Expose
-    private String categoryId;
+    private String categoryTitle;
 
     @SerializedName("date")
     private LocalDateTime date;
@@ -28,12 +28,12 @@ public class PointInfo {
         this.userName = userName;
     }
 
-    public String  getCategoryId() {
-        return categoryId;
+    public String  getCategoryTitle() {
+        return categoryTitle;
     }
 
-    public void setCategoryId(String  categoryId) {
-        this.categoryId = categoryId;
+    public void setCategoryTitle(String  categoryId) {
+        this.categoryTitle = categoryId;
     }
 
     public LocalDateTime getDate() {

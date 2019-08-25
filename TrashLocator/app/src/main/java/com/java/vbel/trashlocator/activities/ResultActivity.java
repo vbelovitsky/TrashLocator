@@ -13,11 +13,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.java.vbel.trashlocator.dto.PointSend;
 import com.java.vbel.trashlocator.models.Point;
 import com.java.vbel.trashlocator.network.NetworkService;
 import com.java.vbel.trashlocator.R;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -41,8 +43,6 @@ public class ResultActivity extends AppCompatActivity {
     private ConstraintLayout resultLayout;
     private TextView resultText;
     private ImageButton resultButton;
-
-    private boolean SUCCESS = false;
 
 
     @Override
@@ -120,14 +120,14 @@ public class ResultActivity extends AppCompatActivity {
         Toast.makeText(ResultActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
     }
 
-
     private void sendPoint(){
-        Point newPoint = new Point();
+
+        PointSend newPoint = new PointSend();
         newPoint.setUserId(0);
         newPoint.setDate(strDate);
-        newPoint.setLatitude(coordinates[0]);
-        newPoint.setLongitude(coordinates[1]);
-        newPoint.setCategory(strCategory);
+        newPoint.setLat(coordinates[0]);
+        newPoint.setLng(coordinates[1]);
+        newPoint.setCategoryId(0);
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
                 .postPoint(newPoint)

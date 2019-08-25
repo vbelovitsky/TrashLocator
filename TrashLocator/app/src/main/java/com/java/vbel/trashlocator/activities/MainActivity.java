@@ -52,7 +52,8 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
 import com.java.vbel.trashlocator.R;
-import com.java.vbel.trashlocator.models.Point;
+import com.java.vbel.trashlocator.dto.PointInfo;
+import com.java.vbel.trashlocator.dto.PointMarker;
 import com.java.vbel.trashlocator.network.NetworkService;
 
 import retrofit2.Call;
@@ -60,7 +61,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class MainActivity extends FragmentActivity implements OnMapReadyCallback{
+public class MainActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
 
     private String currentPhotoPath;
@@ -89,6 +90,16 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //////////////////////////////////
+        Button button = findViewById(R.id.adminButton);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, AdminActivity.class);
+                startActivity(intent);
+            }
+        });
+        //////////////////////////////////
 
         mGps = findViewById(R.id.ic_gps);
 
@@ -314,21 +325,21 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 //endregion
 
-    //region Network
+    //region Points (Markers)
     private void getPoints(){
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
                 .getAllPoints()
-                .enqueue(new Callback<List<Point>>() {
+                .enqueue(new Callback<List<PointMarker>>() {
                     @Override
-                    public void onResponse(@NonNull Call<List<Point>> call, @NonNull Response<List<Point>> response) {
+                    public void onResponse(@NonNull Call<List<PointMarker>> call, @NonNull Response<List<PointMarker>> response) {
 
                         setMarkers(response.body());
 
                     }
 
                     @Override
-                    public void onFailure(@NonNull Call<List<Point>> call, @NonNull Throwable t) {
+                    public void onFailure(@NonNull Call<List<PointMarker>> call, @NonNull Throwable t) {
                         if(t.getClass() == UnknownHostException.class)
                             Toast.makeText(MainActivity.this, "Check Internet connection!", Toast.LENGTH_SHORT).show();
                         else
@@ -337,20 +348,56 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 });
     }
-    //endregion
 
-    private void setMarkers(List<Point> points){
-        for(Point point: points){
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(point.getLatitude(),point.getLongitude()))
-                    .title(point.getCategory())
-                    .snippet("User: " + point.getUserId()+", "+point.getDate()));
+
+    private void setMarkers(List<PointMarker> points){
+        for(PointMarker point: points){
+            Marker marker =  mMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(point.getLat(),point.getLng())));
+            marker.setTag(point.getId());
         }
+        mMap.setOnMarkerClickListener(this);
     }
 
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        String is_completed = (String) marker.getTag();
+        getPointInfo(marker);
+        return false;
+    }
+
+
+    private void getPointInfo(final Marker marker){
+        long pointId = (long)marker.getTag();
+        NetworkService.getInstance(BASE_TEST_URL)
+                .getTestApi()
+                .getPoint(pointId)
+                .enqueue(new Callback<PointInfo>() {
+                    @Override
+                    public void onResponse(@NonNull Call<PointInfo> call, @NonNull Response<PointInfo> response) {
+                        setMarkerInfo(response.body(), marker);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<PointInfo> call, @NonNull Throwable t) {
+                        if(t.getClass() == UnknownHostException.class)
+                            Toast.makeText(MainActivity.this, "Check Internet connection!", Toast.LENGTH_SHORT).show();
+                        else
+                            Toast.makeText(MainActivity.this, "Error occurred while getting request!", Toast.LENGTH_SHORT).show();
+                        t.printStackTrace();
+                    }
+                });
+    }
+
+    private void setMarkerInfo(PointInfo pointInfo, Marker marker){
+        marker.setTitle(pointInfo.getCategoryTitle());
+        marker.setSnippet(pointInfo.getUserName() + ", " +pointInfo.getDate());
+        marker.setTag("Completed");
+    }
+    //endregion
+
+    //region ML + intent to result
     public void getMLLabelsFromImage(Bitmap bitmap) {
-        final String ERROR_MESSAGE = "No label found((";
-        final String HARD_ERROR_MESSAGE = "Error with Samsung storage, my bad((";
 
         if (bitmap != null) {
             FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(bitmap);
@@ -360,44 +407,34 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         @Override
                         public void onSuccess(List<FirebaseVisionImageLabel> labels) {
 
-                            StringBuilder stringBuilder = new StringBuilder();
                             ArrayList<String> labelArray = new ArrayList<>();
                             for (FirebaseVisionImageLabel label: labels) {
                                 String text = label.getText();
                                 String entityId = label.getEntityId();
                                 float confidence = label.getConfidence();
-
-                                stringBuilder.append(text).append(" ");
                                 labelArray.add(text);
                             }
-                            showMessage(stringBuilder.toString(), labelArray);
+                            goToResultActivity(labelArray);
 
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            showMessage(ERROR_MESSAGE, null);
+                            goToResultActivity(null);
                         }
                     });
         } else {
-            showMessage(HARD_ERROR_MESSAGE, null);
+            goToResultActivity(null);
         }
     }
 
-//    private void showMessage(String data){
-//        Toast.makeText(MainActivity.this, data, Toast.LENGTH_LONG).show();
-//        Intent resultActivityIntent = new Intent(MainActivity.this, ResultActivity.class);
-//        resultActivityIntent.putExtra("coordinates", coordinates);
-//        startActivity(resultActivityIntent);
-//    }
 
-    private void showMessage(String data, ArrayList<String> labelArray){
-        Toast.makeText(MainActivity.this, data, Toast.LENGTH_LONG).show();
+    private void goToResultActivity(ArrayList<String> labelArray){
         Intent resultActivityIntent = new Intent(MainActivity.this, ResultActivity.class);
         resultActivityIntent.putExtra("coordinates", coordinates);
         resultActivityIntent.putExtra("labels", labelArray); //Could be null
         startActivity(resultActivityIntent);
     }
-
+    //endregion
 }

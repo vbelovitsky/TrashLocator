@@ -17,6 +17,10 @@ public class PointMarker {
     @Expose
     private double lng;
 
+    @SerializedName("isCompleted")
+    @Expose
+    private boolean isCompleted;
+
 
 
     public long getId() {
@@ -41,5 +45,13 @@ public class PointMarker {
 
     public void setLng(double lng) {
         this.lng = lng;
+    }
+
+    public boolean isCompleted() {
+        return isCompleted;
+    }
+
+    public void setCompleted(boolean completed) {
+        isCompleted = completed;
     }
 }
