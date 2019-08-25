@@ -1,5 +1,6 @@
 package com.java.vbel.trashlocator.api;
 
+import com.java.vbel.trashlocator.dto.CategoryItem;
 import com.java.vbel.trashlocator.dto.PointInfo;
 import com.java.vbel.trashlocator.dto.PointMarker;
 import com.java.vbel.trashlocator.dto.PointSend;
@@ -23,8 +24,10 @@ public interface TestServerApi {
     @GET("points")
     public Call<List<PointMarker>> getAllPoints();
 
-    @POST("point/create")
+    @POST("point")
     public Call<Void> postPoint(@Body PointSend point);
 
+    @GET("categories")
+    public Call<List<CategoryItem>> getAllCategories();
 
 }

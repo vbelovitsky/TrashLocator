@@ -16,7 +16,7 @@ public class PointInfo {
     private String categoryTitle;
 
     @SerializedName("date")
-    private LocalDateTime date;
+    private String date;
 
 
 
@@ -36,11 +36,11 @@ public class PointInfo {
         this.categoryTitle = categoryId;
     }
 
-    public LocalDateTime getDate() {
+    public String  getDate() {
         return date;
     }
 
-    public void setDate(LocalDateTime date) {
+    public void setDate(String date) {
         this.date = date;
     }
 }

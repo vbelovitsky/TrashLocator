@@ -49,16 +49,14 @@ import retrofit2.Response;
 
 public class AdminActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
-    List<PointMarker> pointList;
+
     double[][] latLngArray;
 
-    private static final String TAG = "MainActivity";
     private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
 
 
     //vars and widgets
     private GoogleMap mMap;
-    private FusedLocationProviderClient mFusedLocationProviderClient;
     private Marker mMarker;
     private ImageView mGps;
 
@@ -89,24 +87,7 @@ public class AdminActivity extends FragmentActivity implements OnMapReadyCallbac
                         if (latLngArray.length < numClusters)
                             Toast.makeText(AdminActivity.this, "Число больше, чем количество отметок", Toast.LENGTH_SHORT).show();
                         else {
-                            Kmeans kmeans = new Kmeans(latLngArray, numClusters);
-                            double[][] tempArray = kmeans.getCentersArray();
-                            if (tempArray != null) {
-                                List<PointMarker> greenMarkers = new ArrayList<>();
-                                for (int i = 0; i < tempArray.length; i++) {
-                                    PointMarker pointMarker = new PointMarker();
-                                    pointMarker.setId(1000000000);
-                                    pointMarker.setCompleted(false);
-                                    pointMarker.setLat(tempArray[i][0]);
-                                    pointMarker.setLng(tempArray[i][1]);
-
-                                    greenMarkers.add(pointMarker);
-
-                                    System.out.println("WOOOOW " + tempArray[i][0] + " " + tempArray[i][1]);
-                                }
-                                setGreenMarkers(greenMarkers);
-                                kMeansButton.setEnabled(false);
-                            }
+                            kMeansRun(numClusters);
                         }
                     }
                 } catch (NumberFormatException e) {
@@ -118,6 +99,28 @@ public class AdminActivity extends FragmentActivity implements OnMapReadyCallbac
         initMap();
     }
 
+    private void kMeansRun(int numClusters){
+        Kmeans kmeans = new Kmeans(latLngArray, numClusters);
+        double[][] tempArray = kmeans.getCentersArray();
+        if (tempArray != null) {
+            List<PointMarker> greenMarkers = new ArrayList<>();
+            for (int i = 0; i < tempArray.length; i++) {
+                PointMarker pointMarker = new PointMarker();
+                pointMarker.setId(1000000000);
+                pointMarker.setCompleted(false);
+                pointMarker.setLat(tempArray[i][0]);
+                pointMarker.setLng(tempArray[i][1]);
+
+                greenMarkers.add(pointMarker);
+
+                System.out.println("WOOOOW " + tempArray[i][0] + " " + tempArray[i][1]);
+            }
+            setGreenMarkers(greenMarkers);
+            kMeansButton.setEnabled(false);
+        }else{
+            Toast.makeText(AdminActivity.this, "Ошибка алгоритма", Toast.LENGTH_SHORT).show();
+        }
+    }
 
 //    private void kMeansRun(final int numClusters){
 //        Thread asyncThread = new Thread(new Runnable() {
@@ -204,7 +207,7 @@ public class AdminActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     private void generatePoints() {
-        int generateLength = 50;
+        int generateLength = 100;
         List<PointMarker> generatedPointArray = new ArrayList<>();
         double[][] latLngTempArray = new double[generateLength][2];
 

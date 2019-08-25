@@ -23,6 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 
 import java.io.File;
@@ -82,14 +83,20 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker mMarker;
     private ImageView mGps;
 
+    //base url for api
     private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
 
+    //coordinates of new marker
     private double[] coordinates = new double[2];
+
+    //Category fragment
+    DialogFragment categoryFragment = new DialogFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         //////////////////////////////////
         Button button = findViewById(R.id.adminButton);
         button.setOnClickListener(new View.OnClickListener() {
@@ -361,8 +368,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        String is_completed = (String) marker.getTag();
-        getPointInfo(marker);
+        if (marker.getTag() != null) {
+            if ((long) marker.getTag() != (long)-1) getPointInfo(marker);
+        }
         return false;
     }
 
@@ -375,7 +383,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .enqueue(new Callback<PointInfo>() {
                     @Override
                     public void onResponse(@NonNull Call<PointInfo> call, @NonNull Response<PointInfo> response) {
-                        setMarkerInfo(response.body(), marker);
+                        try {
+                            setMarkerInfo(response.body(), marker);
+                        }catch (NullPointerException e){
+                            Toast.makeText(MainActivity.this, response.toString(), Toast.LENGTH_SHORT).show();
+                        }
                     }
 
                     @Override
@@ -389,10 +401,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 });
     }
 
-    private void setMarkerInfo(PointInfo pointInfo, Marker marker){
+    private void setMarkerInfo(PointInfo pointInfo, Marker marker) throws NullPointerException{
         marker.setTitle(pointInfo.getCategoryTitle());
         marker.setSnippet(pointInfo.getUserName() + ", " +pointInfo.getDate());
-        marker.setTag("Completed");
+        marker.showInfoWindow();
+        marker.setTag((long)-1);
     }
     //endregion
 

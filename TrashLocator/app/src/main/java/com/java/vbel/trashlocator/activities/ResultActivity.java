@@ -123,11 +123,12 @@ public class ResultActivity extends AppCompatActivity {
     private void sendPoint(){
 
         PointSend newPoint = new PointSend();
-        newPoint.setUserId(0);
+        newPoint.setUserId(1);
         newPoint.setDate(strDate);
         newPoint.setLat(coordinates[0]);
         newPoint.setLng(coordinates[1]);
-        newPoint.setCategoryId(0);
+        newPoint.setCategoryId(1);
+
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
                 .postPoint(newPoint)
