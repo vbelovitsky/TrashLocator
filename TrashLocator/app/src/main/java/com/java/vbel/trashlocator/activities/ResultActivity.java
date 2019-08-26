@@ -32,6 +32,9 @@ public class ResultActivity extends AppCompatActivity {
     private double[] coordinates;
     private ArrayList<String> labelsArray;
 
+    private long categoryId;
+    private String categoryTitle;
+
     private String strUser;
     private String strDate;
     private String strCoordinates;
@@ -53,6 +56,9 @@ public class ResultActivity extends AppCompatActivity {
         //get data from intent
         coordinates = getIntent().getDoubleArrayExtra("coordinates");
         labelsArray = getIntent().getStringArrayListExtra("labels");
+        categoryId = getIntent().getLongExtra("categoryId", 0);
+        categoryTitle = getIntent().getStringExtra("categoryTitle");
+
         prepareStringData(coordinates, labelsArray);
 
         resultLayout = findViewById(R.id.resultLayout);
@@ -99,7 +105,7 @@ public class ResultActivity extends AppCompatActivity {
 
         strCoordinates = "\n" + coordinates[0]+ ", " + coordinates[1];
 
-        strCategory = "small trash"; //actually I need category here
+        strCategory = categoryTitle; //actually I need category here
 
         if (labelsArray != null) {
             StringBuilder stringBuilder = new StringBuilder();
@@ -127,7 +133,7 @@ public class ResultActivity extends AppCompatActivity {
         newPoint.setDate(strDate);
         newPoint.setLat(coordinates[0]);
         newPoint.setLng(coordinates[1]);
-        newPoint.setCategoryId(1);
+        newPoint.setCategoryId(categoryId);
 
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()

@@ -1,6 +1,7 @@
 package com.java.vbel.trashlocator.activities;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -25,6 +26,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,8 +55,11 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
 import com.java.vbel.trashlocator.R;
+import com.java.vbel.trashlocator.adapters.CategoryAdapter;
+import com.java.vbel.trashlocator.dto.CategoryItem;
 import com.java.vbel.trashlocator.dto.PointInfo;
 import com.java.vbel.trashlocator.dto.PointMarker;
+import com.java.vbel.trashlocator.fragments.CategoryFragment;
 import com.java.vbel.trashlocator.network.NetworkService;
 
 import retrofit2.Call;
@@ -62,7 +67,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class MainActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+public class MainActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, CategoryAdapter.GetCategoryFromDialog {
 
 
     private String currentPhotoPath;
@@ -86,16 +91,28 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     //base url for api
     private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
 
-    //coordinates of new marker
+    //coordinates and category id of new marker
     private double[] coordinates = new double[2];
+    private long categoryId;
+    private String categoryTitle;
 
     //Category fragment
-    DialogFragment categoryFragment = new DialogFragment();
+    private CategoryFragment categoryFragment;
+    private ArrayList<CategoryItem> categoryItems = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //Подготовка данных для диалога с категориями
+        categoryFragment = new CategoryFragment();
+        //prepareCategoryData();
+        prepareCategoryData();
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList("categoryItems", categoryItems);
+        categoryFragment.setArguments(bundle);
+
 
         //////////////////////////////////
         Button button = findViewById(R.id.adminButton);
@@ -122,12 +139,61 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         cameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mMarker == null) Toast.makeText(MainActivity.this, "Please, add a marker!", Toast.LENGTH_SHORT).show();
-                else takePhoto();
+                if (mMarker == null) Toast.makeText(MainActivity.this, "Пожалуйста, добавьте маркер!", Toast.LENGTH_SHORT).show();
+                else{
+                    //Вызов диалога со списком категорий мусора
+                    if(categoryItems.size() != 0)categoryFragment.show(getSupportFragmentManager(), "category");
+                    else Toast.makeText(MainActivity.this, "Загрузка категорий...", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         getLocationPermission();
+    }
+
+    private void prepareCategoryData(){
+        NetworkService.getInstance(BASE_TEST_URL)
+                .getTestApi()
+                .getAllCategories()
+                .enqueue(new Callback<List<CategoryItem>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<List<CategoryItem>> call, @NonNull Response<List<CategoryItem>> response) {
+
+                        for(CategoryItem categoryItem: response.body()) categoryItems.add(categoryItem);
+
+                        //categoryItems = new ArrayList<>(response.body());
+                        System.out.println(response.body());
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<List<CategoryItem>> call, @NonNull Throwable t) {
+                        prepareDefaultCategories();
+                        if(t.getClass() == UnknownHostException.class)
+                            Toast.makeText(MainActivity.this, "Failed to download categories", Toast.LENGTH_SHORT).show();
+                        else
+                            Toast.makeText(MainActivity.this, "Error occurred while getting categories!", Toast.LENGTH_SHORT).show();
+                        t.printStackTrace();
+                    }
+                });
+
+    }
+
+    private void prepareDefaultCategories(){
+        for(int i = 0; i < 10; i++){
+            CategoryItem categoryItem = new CategoryItem();
+            categoryItem.setId(i);
+            categoryItem.setTitle(i+"title");
+            categoryItem.setDescription(i+"ЫЫЫЫ");
+            categoryItems.add(categoryItem);
+        }
+    }
+
+    @Override
+    public void getCategoryFromDialog(Long id, String title) {
+        Toast.makeText(MainActivity.this, "Position "+id, Toast.LENGTH_SHORT).show();
+        categoryId = id;
+        categoryTitle = title;
+        takePhoto();
     }
 
     //region Map
@@ -307,6 +373,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             galleryAddPic();
             final Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
             getMLLabelsFromImage(bitmap);
+            //Костыль
+            mMap.setOnMarkerClickListener(null);
         }
     }
 
@@ -446,8 +514,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private void goToResultActivity(ArrayList<String> labelArray){
         Intent resultActivityIntent = new Intent(MainActivity.this, ResultActivity.class);
         resultActivityIntent.putExtra("coordinates", coordinates);
+        resultActivityIntent.putExtra("categoryId", categoryId);
+        resultActivityIntent.putExtra("categoryTitle", categoryTitle);
         resultActivityIntent.putExtra("labels", labelArray); //Could be null
         startActivity(resultActivityIntent);
     }
+
+
     //endregion
 }
