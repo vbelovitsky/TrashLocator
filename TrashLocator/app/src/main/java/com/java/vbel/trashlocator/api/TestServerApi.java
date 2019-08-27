@@ -4,9 +4,6 @@ import com.java.vbel.trashlocator.dto.CategoryItem;
 import com.java.vbel.trashlocator.dto.PointInfo;
 import com.java.vbel.trashlocator.dto.PointMarker;
 import com.java.vbel.trashlocator.dto.PointSend;
-import com.java.vbel.trashlocator.models.Message;
-import com.java.vbel.trashlocator.models.Paper;
-import com.java.vbel.trashlocator.models.Point;
 
 import java.util.List;
 

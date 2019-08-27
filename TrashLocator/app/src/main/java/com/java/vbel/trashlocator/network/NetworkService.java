@@ -1,8 +1,7 @@
 package com.java.vbel.trashlocator.network;
 
-import com.java.vbel.trashlocator.temporary.JSONPlaceHolderApi;
+
 import com.java.vbel.trashlocator.api.TestServerApi;
-import com.java.vbel.trashlocator.temporary.VbelServerApi;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -25,13 +24,6 @@ public class NetworkService {
         return mInstance;
     }
 
-//    public JSONPlaceHolderApi getJSONApi() {
-//        return mRetrofit.create(JSONPlaceHolderApi.class);
-//    }
-
-//    public VbelServerApi getVbelApi() {
-//        return mRetrofit.create(VbelServerApi.class);
-//    }
 
     public TestServerApi getTestApi(){return mRetrofit.create(TestServerApi.class);}
 

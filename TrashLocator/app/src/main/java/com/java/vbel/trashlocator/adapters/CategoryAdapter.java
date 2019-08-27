@@ -53,6 +53,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryHolder> {
         //Set UI
         holder.categoryTitle.setText(categoryItems.get(position).getTitle());
         holder.categoryDescription.setText(categoryItems.get(position).getDescription());
+        holder.categoryImage.setImageResource((int)categoryItems.get(position).getImage());
     }
 
     @Override

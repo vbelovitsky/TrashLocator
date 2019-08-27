@@ -42,6 +42,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -151,6 +152,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         getLocationPermission();
     }
 
+    //region Categories
     private void prepareCategoryData(){
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
@@ -159,19 +161,33 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onResponse(@NonNull Call<List<CategoryItem>> call, @NonNull Response<List<CategoryItem>> response) {
 
-                        for(CategoryItem categoryItem: response.body()) categoryItems.add(categoryItem);
+                        //Костыльно, нужен рефакторинг
+                        try {
+                            long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_small};
+                            for (int i = 0; i < response.body().size(); i++) {
+                                CategoryItem categoryItem = response.body().get(i);
+                                try {
+                                    categoryItem.setImage(categoryImages[i]);
+                                } catch (IndexOutOfBoundsException e) {
+                                    categoryItem.setImage(R.drawable.trash_default);
+                                }
 
-                        //categoryItems = new ArrayList<>(response.body());
-                        System.out.println(response.body());
+                                categoryItems.add(categoryItem);
+                            }
+                        } catch (NullPointerException e){
+                            prepareDefaultCategories();
+                        }
+
+
                     }
 
                     @Override
                     public void onFailure(@NonNull Call<List<CategoryItem>> call, @NonNull Throwable t) {
                         prepareDefaultCategories();
                         if(t.getClass() == UnknownHostException.class)
-                            Toast.makeText(MainActivity.this, "Failed to download categories", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Не удалось загрузить категории", Toast.LENGTH_SHORT).show();
                         else
-                            Toast.makeText(MainActivity.this, "Error occurred while getting categories!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Ошибка поключения к серверу", Toast.LENGTH_SHORT).show();
                         t.printStackTrace();
                     }
                 });
@@ -179,22 +195,28 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void prepareDefaultCategories(){
-        for(int i = 0; i < 10; i++){
+        long[] categoryIds = {1, 2, 3};
+        String[] categoryTitles = {"Мелкий мусор", "Куча мусора", "Свалка", };
+        String[] categoryDescriptions = {"Немного мусора вне урны", "Большое количество скопившегося мусора", "Огромная куча бытовых или строительных отходов"};
+        long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_big};
+        for(int i = 0; i < categoryIds.length; i++){
             CategoryItem categoryItem = new CategoryItem();
-            categoryItem.setId(i);
-            categoryItem.setTitle(i+"title");
-            categoryItem.setDescription(i+"ЫЫЫЫ");
+            categoryItem.setId(categoryIds[i]);
+            categoryItem.setTitle(categoryTitles[i]);
+            categoryItem.setDescription(categoryDescriptions[i]);
+            categoryItem.setImage(categoryImages[i]);
             categoryItems.add(categoryItem);
         }
     }
 
     @Override
     public void getCategoryFromDialog(Long id, String title) {
-        Toast.makeText(MainActivity.this, "Position "+id, Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, "Категория:  "+id, Toast.LENGTH_SHORT).show();
         categoryId = id;
         categoryTitle = title;
         takePhoto();
     }
+    //endregion
 
     //region Map
     public void initMap(){
@@ -237,7 +259,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d(TAG, "onMapClick");
 
                 if (mMarker != null) mMarker.remove();
-                mMarker = mMap.addMarker(new MarkerOptions().position(latLng));
+                mMarker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
                 coordinates[0] = mMarker.getPosition().latitude;
                 coordinates[1] = mMarker.getPosition().longitude;
 
@@ -269,7 +291,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             }
 
                         }else{
-                            Toast.makeText(MainActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Невозможно определить местоположение", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -416,9 +438,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onFailure(@NonNull Call<List<PointMarker>> call, @NonNull Throwable t) {
                         if(t.getClass() == UnknownHostException.class)
-                            Toast.makeText(MainActivity.this, "Check Internet connection!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Проверьте соединение с интернетом!", Toast.LENGTH_SHORT).show();
                         else
-                            Toast.makeText(MainActivity.this, "Error occurred while getting request!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Ошибка подключения к серверу", Toast.LENGTH_SHORT).show();
                         t.printStackTrace();
                     }
                 });
@@ -461,9 +483,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onFailure(@NonNull Call<PointInfo> call, @NonNull Throwable t) {
                         if(t.getClass() == UnknownHostException.class)
-                            Toast.makeText(MainActivity.this, "Check Internet connection!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Проверьте соединение с интернетом!", Toast.LENGTH_SHORT).show();
                         else
-                            Toast.makeText(MainActivity.this, "Error occurred while getting request!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Ошибка подключения к серверу", Toast.LENGTH_SHORT).show();
                         t.printStackTrace();
                     }
                 });
@@ -522,4 +544,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     //endregion
+
+
 }
