@@ -7,22 +7,33 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.java.vbel.trashlocator.dto.PointImageSend;
 import com.java.vbel.trashlocator.dto.PointSend;
+import com.java.vbel.trashlocator.models.Image;
 import com.java.vbel.trashlocator.models.Point;
 import com.java.vbel.trashlocator.network.NetworkService;
 import com.java.vbel.trashlocator.R;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -31,6 +42,7 @@ public class ResultActivity extends AppCompatActivity {
 
     private double[] coordinates;
     private ArrayList<String> labelsArray;
+    private String currentPhotoPath;
 
     private long categoryId;
     private String categoryTitle;
@@ -58,6 +70,7 @@ public class ResultActivity extends AppCompatActivity {
         labelsArray = getIntent().getStringArrayListExtra("labels");
         categoryId = getIntent().getLongExtra("categoryId", 0);
         categoryTitle = getIntent().getStringExtra("categoryTitle");
+        currentPhotoPath = getIntent().getStringExtra("imageURI");
 
         prepareStringData(coordinates, labelsArray);
 
@@ -86,11 +99,16 @@ public class ResultActivity extends AppCompatActivity {
         TextView labelsText = findViewById(R.id.labelsText);
         labelsText.append("\n" + strLabels);
 
+        final CheckBox checkBox = findViewById(R.id.checkboxForImage);
+
         resultButton = findViewById(R.id.resultButton);
         resultButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendPoint();
+//                if(checkBox.isChecked()) sendPointWithImage(currentPhotoPath);
+//                else sendPoint();
+                String test = imageToString(currentPhotoPath);
+                System.out.println(test);
             }
         });
     }
@@ -161,6 +179,55 @@ public class ResultActivity extends AppCompatActivity {
                         t.printStackTrace();
                     }
                 });
+    }
+
+    private void sendPointWithImage(String filePath){
+
+        PointImageSend newPoint = new PointImageSend();
+        newPoint.setUserId(1);
+        newPoint.setDate(strDate);
+        newPoint.setLat(coordinates[0]);
+        newPoint.setLng(coordinates[1]);
+        newPoint.setCategoryId(categoryId);
+
+        //Из фото (битмапа) в стринг base64
+        String stringImage = imageToString(currentPhotoPath);
+        newPoint.setImage(stringImage);
+
+                NetworkService.getInstance(BASE_TEST_URL)
+                .getTestApi()
+                .postPointWithImage(newPoint)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                        resultText.setText("Ваш запрос отправлен");
+                        resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightGreen));
+                        resultButton.setImageDrawable(getDrawable(R.drawable.out));
+                        resultButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            }
+                        });
+                    }
+                    @Override
+                    public void onFailure(@NonNull Call<Void> call,@NonNull Throwable t) {
+                        resultText.setText("Ошибка отправки");
+                        resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightRed));
+                        t.printStackTrace();
+                    }
+                });
+    }
+
+    private String imageToString(String filePath){
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
 

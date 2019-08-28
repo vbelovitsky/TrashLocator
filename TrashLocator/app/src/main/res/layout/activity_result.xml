@@ -78,6 +78,27 @@
         app:layout_constraintTop_toBottomOf="@+id/categoryText"
         android:background="@color/colorWhite"/>
 
+    <TextView
+        android:id="@+id/imageUploadText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginTop="28dp"
+        android:text="Прикрепить фото к запросу: "
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/labelsText"
+        android:background="@color/colorWhite"/>
+
+    <CheckBox
+        android:id="@+id/checkboxForImage"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/imageUploadText"
+        app:layout_constraintEnd_toEndOf="@+id/imageUploadText"
+        app:layout_constraintTop_toTopOf="@+id/imageUploadText" />
+
 
     <ImageButton
         android:id="@+id/resultButton"

@@ -163,7 +163,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
                         //Костыльно, нужен рефакторинг
                         try {
-                            long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_small};
+                            long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_big};
                             for (int i = 0; i < response.body().size(); i++) {
                                 CategoryItem categoryItem = response.body().get(i);
                                 try {
@@ -539,6 +539,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         resultActivityIntent.putExtra("categoryId", categoryId);
         resultActivityIntent.putExtra("categoryTitle", categoryTitle);
         resultActivityIntent.putExtra("labels", labelArray); //Could be null
+        resultActivityIntent.putExtra("imageURI", currentPhotoPath);
         startActivity(resultActivityIntent);
     }
 
