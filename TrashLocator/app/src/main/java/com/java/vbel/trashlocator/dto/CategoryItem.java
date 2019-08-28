@@ -20,9 +20,7 @@ public class CategoryItem implements Parcelable {
     @Expose
     private String description;
 
-    @SerializedName("image")
-    @Expose
-    private long image;
+
 
 
 
@@ -48,14 +46,6 @@ public class CategoryItem implements Parcelable {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public long getImage() {
-        return image;
-    }
-
-    public void setImage(long image) {
-        this.image = image;
     }
 
     @Override

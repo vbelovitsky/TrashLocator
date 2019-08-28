@@ -27,6 +27,10 @@ public class PointSend {
     @Expose
     private String date;
 
+    @SerializedName("image")
+    @Expose
+    private String image;
+
 
 
     public long getUserId() {
@@ -67,5 +71,13 @@ public class PointSend {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }

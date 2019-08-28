@@ -17,23 +17,18 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.java.vbel.trashlocator.dto.PointImageSend;
 import com.java.vbel.trashlocator.dto.PointSend;
-import com.java.vbel.trashlocator.models.Image;
-import com.java.vbel.trashlocator.models.Point;
 import com.java.vbel.trashlocator.network.NetworkService;
 import com.java.vbel.trashlocator.R;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -58,6 +53,9 @@ public class ResultActivity extends AppCompatActivity {
     private ConstraintLayout resultLayout;
     private TextView resultText;
     private ImageButton resultButton;
+    private CheckBox checkBox;
+
+    private boolean COMPLETED = false;
 
 
     @Override
@@ -99,16 +97,13 @@ public class ResultActivity extends AppCompatActivity {
         TextView labelsText = findViewById(R.id.labelsText);
         labelsText.append("\n" + strLabels);
 
-        final CheckBox checkBox = findViewById(R.id.checkboxForImage);
+        checkBox = findViewById(R.id.checkboxForImage);
 
         resultButton = findViewById(R.id.resultButton);
         resultButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                if(checkBox.isChecked()) sendPointWithImage(currentPhotoPath);
-//                else sendPoint();
-                String test = imageToString(currentPhotoPath);
-                System.out.println(test);
+                sendPoint();
             }
         });
     }
@@ -147,11 +142,20 @@ public class ResultActivity extends AppCompatActivity {
     private void sendPoint(){
 
         PointSend newPoint = new PointSend();
+
         newPoint.setUserId(1);
         newPoint.setDate(strDate);
         newPoint.setLat(coordinates[0]);
         newPoint.setLng(coordinates[1]);
         newPoint.setCategoryId(categoryId);
+
+        String stringImage = "";
+        //Из фото (битмапа) в стринг base64
+        if(checkBox.isChecked()){
+            stringImage = imageToString(currentPhotoPath);
+            System.out.println(stringImage);
+        }
+        newPoint.setImage(stringImage);
 
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
@@ -159,8 +163,12 @@ public class ResultActivity extends AppCompatActivity {
                 .enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+
+                        COMPLETED = true;
                         resultText.setText("Ваш запрос отправлен");
                         resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightGreen));
+
+                        //Обновление MainActivity при нажатии круглой кнопки
                         resultButton.setImageDrawable(getDrawable(R.drawable.out));
                         resultButton.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -171,47 +179,7 @@ public class ResultActivity extends AppCompatActivity {
                                 startActivity(intent);
                             }
                         });
-                    }
-                    @Override
-                    public void onFailure(@NonNull Call<Void> call,@NonNull Throwable t) {
-                        resultText.setText("Ошибка отправки");
-                        resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightRed));
-                        t.printStackTrace();
-                    }
-                });
-    }
 
-    private void sendPointWithImage(String filePath){
-
-        PointImageSend newPoint = new PointImageSend();
-        newPoint.setUserId(1);
-        newPoint.setDate(strDate);
-        newPoint.setLat(coordinates[0]);
-        newPoint.setLng(coordinates[1]);
-        newPoint.setCategoryId(categoryId);
-
-        //Из фото (битмапа) в стринг base64
-        String stringImage = imageToString(currentPhotoPath);
-        newPoint.setImage(stringImage);
-
-                NetworkService.getInstance(BASE_TEST_URL)
-                .getTestApi()
-                .postPointWithImage(newPoint)
-                .enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                        resultText.setText("Ваш запрос отправлен");
-                        resultLayout.setBackgroundColor(getResources().getColor(R.color.colorLightGreen));
-                        resultButton.setImageDrawable(getDrawable(R.drawable.out));
-                        resultButton.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
-                            }
-                        });
                     }
                     @Override
                     public void onFailure(@NonNull Call<Void> call,@NonNull Throwable t) {
@@ -225,9 +193,19 @@ public class ResultActivity extends AppCompatActivity {
     private String imageToString(String filePath){
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 10, byteArrayOutputStream);
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
+
+    @Override
+    public void onBackPressed(){
+        if(COMPLETED){
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }else super.onBackPressed();
     }
 
 
