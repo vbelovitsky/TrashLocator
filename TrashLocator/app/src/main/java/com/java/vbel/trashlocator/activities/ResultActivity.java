@@ -12,12 +12,16 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.java.vbel.trashlocator.adapters.CategoryAdapter;
+import com.java.vbel.trashlocator.dto.CategoryItem;
 import com.java.vbel.trashlocator.dto.PointSend;
+import com.java.vbel.trashlocator.fragments.CategoryFragment;
 import com.java.vbel.trashlocator.network.NetworkService;
 import com.java.vbel.trashlocator.R;
 
@@ -33,7 +37,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ResultActivity extends AppCompatActivity {
+public class ResultActivity extends AppCompatActivity implements CategoryAdapter.GetCategoryFromDialog {
 
     private double[] coordinates;
     private ArrayList<String> labelsArray;
@@ -45,7 +49,6 @@ public class ResultActivity extends AppCompatActivity {
     private String strUser;
     private String strDate;
     private String strCoordinates;
-    private String strCategory;
     private String strLabels;
 
     private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
@@ -54,8 +57,13 @@ public class ResultActivity extends AppCompatActivity {
     private TextView resultText;
     private ImageButton resultButton;
     private CheckBox checkBox;
+    private TextView categoryText;
 
     private boolean COMPLETED = false;
+
+    //Category fragment
+    private CategoryFragment categoryFragment;
+    private ArrayList<CategoryItem> categoryItems = new ArrayList<>();
 
 
     @Override
@@ -63,11 +71,16 @@ public class ResultActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
 
+        //Подготовка данных для диалога с категориями
+        categoryFragment = new CategoryFragment();
+        prepareDefaultCategories();
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList("categoryItems", categoryItems);
+        categoryFragment.setArguments(bundle);
+
         //get data from intent
         coordinates = getIntent().getDoubleArrayExtra("coordinates");
         labelsArray = getIntent().getStringArrayListExtra("labels");
-        categoryId = getIntent().getLongExtra("categoryId", 0);
-        categoryTitle = getIntent().getStringExtra("categoryTitle");
         currentPhotoPath = getIntent().getStringExtra("imageURI");
 
         prepareStringData(coordinates, labelsArray);
@@ -91,8 +104,15 @@ public class ResultActivity extends AppCompatActivity {
             }
         });
 
-        TextView categoryText = findViewById(R.id.categoryText);
-        categoryText.append(strCategory);
+        categoryText = findViewById(R.id.categoryText);
+        categoryText.append(categoryTitle);
+        Button categoryButton = findViewById(R.id.changeCategoryButton);
+        categoryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                categoryFragment.show(getSupportFragmentManager(), "category");
+            }
+        });
 
         TextView labelsText = findViewById(R.id.labelsText);
         labelsText.append("\n" + strLabels);
@@ -118,8 +138,6 @@ public class ResultActivity extends AppCompatActivity {
 
         strCoordinates = "\n" + coordinates[0]+ ", " + coordinates[1];
 
-        strCategory = categoryTitle; //actually I need category here
-
         if (labelsArray != null) {
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < labelsArray.size(); i++) {
@@ -140,7 +158,6 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private void sendPoint(){
-
         PointSend newPoint = new PointSend();
 
         newPoint.setUserId(1);
@@ -208,5 +225,76 @@ public class ResultActivity extends AppCompatActivity {
         }else super.onBackPressed();
     }
 
+    private void prepareDefaultCategories(){
+        long[] categoryIds = {1, 2, 3};
+        String[] categoryTitles = {"Мелкий мусор", "Куча мусора", "Свалка", };
+        String[] categoryDescriptions = {"Немного мусора вне урны", "Большое количество скопившегося мусора", "Огромная куча бытовых или строительных отходов"};
+        long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_big};
+
+        //Инициализируем дефолтные значения
+        categoryId = 0;
+        categoryTitle = categoryTitles[0];
+
+        //Заполняем массив категорий
+        for(int i = 0; i < categoryIds.length; i++){
+            CategoryItem categoryItem = new CategoryItem();
+            categoryItem.setId(categoryIds[i]);
+            categoryItem.setTitle(categoryTitles[i]);
+            categoryItem.setDescription(categoryDescriptions[i]);
+            categoryItem.setImage(categoryImages[i]);
+            categoryItems.add(categoryItem);
+        }
+    }
+
+    @Override
+    public void getCategoryFromDialog(Long id, String title) {
+        Toast.makeText(ResultActivity.this, "Категория:  "+title, Toast.LENGTH_SHORT).show();
+        categoryId = id;
+        categoryTitle = title;
+        categoryText.setText("Категория:\n" + categoryTitle);
+    }
+
+    //region useless category request
+//    private void prepareCategoryData(){
+//        NetworkService.getInstance(BASE_TEST_URL)
+//                .getTestApi()
+//                .getAllCategories()
+//                .enqueue(new Callback<List<CategoryItem>>() {
+//                    @Override
+//                    public void onResponse(@NonNull Call<List<CategoryItem>> call, @NonNull Response<List<CategoryItem>> response) {
+//
+//                        //Костыльно, нужен рефакторинг
+//                        try {
+//                            long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_big};
+//                            for (int i = 0; i < response.body().size(); i++) {
+//                                CategoryItem categoryItem = response.body().get(i);
+//                                try {
+//                                    categoryItem.setImage(categoryImages[i]);
+//                                } catch (IndexOutOfBoundsException e) {
+//                                    categoryItem.setImage(R.drawable.trash_default);
+//                                }
+//
+//                                categoryItems.add(categoryItem);
+//                            }
+//                        } catch (NullPointerException e){
+//                            prepareDefaultCategories();
+//                        }
+//
+//
+//                    }
+//
+//                    @Override
+//                    public void onFailure(@NonNull Call<List<CategoryItem>> call, @NonNull Throwable t) {
+//                        prepareDefaultCategories();
+//                        if(t.getClass() == UnknownHostException.class)
+//                            Toast.makeText(MainActivity.this, "Не удалось загрузить категории", Toast.LENGTH_SHORT).show();
+//                        else
+//                            Toast.makeText(MainActivity.this, "Ошибка поключения к серверу", Toast.LENGTH_SHORT).show();
+//                        t.printStackTrace();
+//                    }
+//                });
+//
+//    }
+    //endregion
 
 }
