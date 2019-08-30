@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Telephony;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -24,6 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.util.Pair;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -61,6 +64,7 @@ import com.java.vbel.trashlocator.dto.CategoryItem;
 import com.java.vbel.trashlocator.dto.PointInfo;
 import com.java.vbel.trashlocator.dto.PointMarker;
 import com.java.vbel.trashlocator.fragments.CategoryFragment;
+import com.java.vbel.trashlocator.models.Point;
 import com.java.vbel.trashlocator.network.NetworkService;
 
 import retrofit2.Call;
@@ -88,10 +92,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private ImageView mGps;
 
     //base url for api
-    private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
+//    private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
+    private String BASE_TEST_URL = "http://192.168.1.56:8080";
+
 
     //coordinates and category id of new marker
     private double[] coordinates = new double[2];
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,10 +131,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         cameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (coordinates[0] == 0){
+                if (coordinates[0] == 0) {
                     Toast.makeText(MainActivity.this, "Пожалуйста, добавьте маркер!", Toast.LENGTH_SHORT).show();
-                }
-                else{
+                } else {
                     //Вызов камеры и съемка фото
                     takePhoto();
                 }
@@ -139,7 +145,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     //region Map
-    public void initMap(){
+    public void initMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
@@ -181,19 +187,23 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 mMarker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
                 coordinates[0] = mMarker.getPosition().latitude;
                 coordinates[1] = mMarker.getPosition().longitude;
+                mMarker.setTag(null);
             }
         });
+
+        setInfoAdapter();
+
     }
 
-    private void getDeviceLocation(){
+    private void getDeviceLocation() {
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        try{
-            if(mLocationPermissionsGranted){
+        try {
+            if (mLocationPermissionsGranted) {
                 final Task location = mFusedLocationProviderClient.getLastLocation();
                 location.addOnCompleteListener(new OnCompleteListener() {
                     @Override
                     public void onComplete(@NonNull Task task) {
-                        if(task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             Location currentLocation = (Location) task.getResult();
 
                             try {
@@ -202,28 +212,28 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                         "My Location");
                                 coordinates[0] = currentLocation.getLatitude();
                                 coordinates[1] = currentLocation.getLongitude();
-                            }catch (NullPointerException e){
+                            } catch (NullPointerException e) {
                                 //Moscow
                                 moveCamera(new LatLng(55.751244, 37.618423),
                                         DEFAULT_ZOOM,
                                         "My Location");
                             }
 
-                        }else{
+                        } else {
                             Toast.makeText(MainActivity.this, "Невозможно определить местоположение", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
             }
-        }catch (SecurityException e){
+        } catch (SecurityException e) {
             e.printStackTrace();
         }
     }
 
-    private void moveCamera(LatLng latLng, float zoom, String title){
+    private void moveCamera(LatLng latLng, float zoom, String title) {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
-        if(!title.equals("My Location")){
+        if (!title.equals("My Location")) {
             MarkerOptions options = new MarkerOptions()
                     .position(latLng)
                     .title(title);
@@ -234,22 +244,22 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     //region Permissions
-    private void getLocationPermission(){
+    private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
 
-        if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mLocationPermissionsGranted = true;
                 //initMap();
-            }else{
+            } else {
                 ActivityCompat.requestPermissions(this,
                         permissions,
                         LOCATION_PERMISSION_REQUEST_CODE);
             }
-        }else{
+        } else {
             ActivityCompat.requestPermissions(this,
                     permissions,
                     LOCATION_PERMISSION_REQUEST_CODE);
@@ -260,11 +270,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         mLocationPermissionsGranted = false;
 
-        switch(requestCode){
-            case LOCATION_PERMISSION_REQUEST_CODE:{
-                if(grantResults.length > 0){
-                    for(int i = 0; i < grantResults.length; i++){
-                        if(grantResults[i] != PackageManager.PERMISSION_GRANTED){
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE: {
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < grantResults.length; i++) {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                             mLocationPermissionsGranted = false;
                             return;
                         }
@@ -278,7 +288,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
     //endregion
 
-    private void hideSoftKeyboard(){
+    private void hideSoftKeyboard() {
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
@@ -286,14 +296,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     //region Camera
 
-    private void takePhoto(){
+    private void takePhoto() {
         Intent callCameraApplicationIntent = new Intent();
         callCameraApplicationIntent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
 
         File photoFile = null;
-        try{
+        try {
             photoFile = createImageFile();
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -309,8 +319,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        if(requestCode == CAMERA && resultCode == RESULT_OK){
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA && resultCode == RESULT_OK) {
             galleryAddPic();
             final Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
             getMLLabelsFromImage(bitmap);
@@ -319,7 +329,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    protected File createImageFile() throws IOException{
+    protected File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "IMAGE_" + timeStamp + "";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
@@ -342,7 +352,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 //endregion
 
     //region Points (Markers)
-    private void getPoints(){
+    private void getPoints() {
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
                 .getAllPoints()
@@ -356,7 +366,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
                     @Override
                     public void onFailure(@NonNull Call<List<PointMarker>> call, @NonNull Throwable t) {
-                        if(t.getClass() == UnknownHostException.class)
+                        if (t.getClass() == UnknownHostException.class)
                             Toast.makeText(MainActivity.this, "Проверьте соединение с интернетом!", Toast.LENGTH_SHORT).show();
                         else
                             Toast.makeText(MainActivity.this, "Ошибка подключения к серверу", Toast.LENGTH_SHORT).show();
@@ -365,12 +375,49 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 });
     }
 
+    private void setInfoAdapter(){
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                if(marker.getTag()!=null) {
+                    View myContentView = getLayoutInflater().inflate(R.layout.infowindow_item, null);
+                    TextView markerCategory = myContentView.findViewById(R.id.markerCategory);
+                    TextView markerDate = myContentView.findViewById(R.id.markerDate);
+                    TextView markerUsername = myContentView.findViewById(R.id.markerUsername);
+                    ImageView markerImage = myContentView.findViewById(R.id.markerImage);
 
-    private void setMarkers(List<PointMarker> points){
-        for(PointMarker point: points){
-            Marker marker =  mMap.addMarker(new MarkerOptions()
-                                .position(new LatLng(point.getLat(),point.getLng())));
-            marker.setTag(point.getId());
+
+                    Pair<Long, PointInfo> tagPair = (Pair) marker.getTag();
+                    PointInfo pointInfo = tagPair.second;
+                    System.out.println("ADAPTER_METHOD");
+
+                    if (pointInfo != null) {
+                        markerCategory.setText(pointInfo.getCategoryTitle());
+                        markerDate.setText(pointInfo.getDate());
+                        markerUsername.setText(pointInfo.getUserName());
+
+                        String base64Image = pointInfo.getImage();
+                        byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                        markerImage.setImageBitmap(decodedByte);
+                    }
+                    return myContentView;
+                } else return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                return null;
+            }
+        });
+    }
+
+    private void setMarkers(List<PointMarker> points) {
+        for (PointMarker point : points) {
+            Marker marker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(point.getLat(), point.getLng())));
+            Pair<Long, PointInfo> tagPair = new Pair<>(point.getId(), null);
+            marker.setTag(tagPair);
         }
         mMap.setOnMarkerClickListener(this);
     }
@@ -378,14 +425,16 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public boolean onMarkerClick(Marker marker) {
         if (marker.getTag() != null) {
-            if ((long) marker.getTag() != (long)-1) getPointInfo(marker);
+            Pair<Long, PointInfo> tagPair = (Pair) marker.getTag();
+            if ( tagPair.first != (long) -1)getPointInfo(marker);
         }
         return false;
     }
 
 
-    private void getPointInfo(final Marker marker){
-        long pointId = (long)marker.getTag();
+    private void getPointInfo(final Marker marker) {
+        Pair<Long, PointInfo> tagPair = (Pair) marker.getTag();
+        long pointId = tagPair.first;
         NetworkService.getInstance(BASE_TEST_URL)
                 .getTestApi()
                 .getPoint(pointId)
@@ -394,14 +443,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     public void onResponse(@NonNull Call<PointInfo> call, @NonNull Response<PointInfo> response) {
                         try {
                             setMarkerInfo(response.body(), marker);
-                        }catch (NullPointerException e){
+                        } catch (NullPointerException e) {
                             Toast.makeText(MainActivity.this, response.toString(), Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(@NonNull Call<PointInfo> call, @NonNull Throwable t) {
-                        if(t.getClass() == UnknownHostException.class)
+                        if (t.getClass() == UnknownHostException.class)
                             Toast.makeText(MainActivity.this, "Проверьте соединение с интернетом!", Toast.LENGTH_SHORT).show();
                         else
                             Toast.makeText(MainActivity.this, "Ошибка подключения к серверу", Toast.LENGTH_SHORT).show();
@@ -410,12 +459,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 });
     }
 
-    private void setMarkerInfo(PointInfo pointInfo, Marker marker) throws NullPointerException{
-        marker.setTitle(pointInfo.getCategoryTitle());
-        marker.setSnippet(pointInfo.getUserName() + ", " +pointInfo.getDate());
+    private void setMarkerInfo(PointInfo pointInfo, Marker marker) throws NullPointerException {
+        Pair<Long, PointInfo> tagPairNew = new Pair<>((long)-1, pointInfo);
+        marker.setTag(tagPairNew);
+        System.out.println("MAIN_METHOD");
         marker.showInfoWindow();
-        marker.setTag((long)-1);
     }
+
     //endregion
 
     //region ML + intent to result
@@ -430,7 +480,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         public void onSuccess(List<FirebaseVisionImageLabel> labels) {
 
                             ArrayList<String> labelArray = new ArrayList<>();
-                            for (FirebaseVisionImageLabel label: labels) {
+                            for (FirebaseVisionImageLabel label : labels) {
                                 String text = label.getText();
                                 String entityId = label.getEntityId();
                                 float confidence = label.getConfidence();
@@ -452,13 +502,33 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    private void goToResultActivity(ArrayList<String> labelArray){
+    private void goToResultActivity(ArrayList<String> labelArray) {
         Intent resultActivityIntent = new Intent(MainActivity.this, ResultActivity.class);
         resultActivityIntent.putExtra("coordinates", coordinates);
         resultActivityIntent.putExtra("labels", labelArray); //Could be null
         resultActivityIntent.putExtra("imageURI", currentPhotoPath);
         startActivity(resultActivityIntent);
     }
+
+
+//    @Override
+//    public View getInfoWindow(Marker marker) {
+//        return null;
+//    }
+//
+//    @Override
+//    public View getInfoContents(Marker marker) {
+//        View myContentView = getLayoutInflater().inflate(R.layout.infowindow_item, null);
+//        TextView markerCategory = myContentView.findViewById(R.id.markerCategory);
+//        TextView markerDate = myContentView.findViewById(R.id.markerDate);
+//        TextView markerUsername = myContentView.findViewById(R.id.markerUsername);
+//
+//        tvTitle.setText(marker.getTitle());
+//        tvSnippet.setText(marker.getSnippet());
+//
+//
+//        return myContentView;
+//    }
 
 
     //endregion

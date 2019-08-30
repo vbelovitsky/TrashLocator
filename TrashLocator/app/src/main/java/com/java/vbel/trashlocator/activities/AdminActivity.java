@@ -52,8 +52,7 @@ public class AdminActivity extends FragmentActivity implements OnMapReadyCallbac
 
     double[][] latLngArray;
 
-    private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
-
+    private String BASE_TEST_URL = "http://192.168.1.56:8080";
 
     //vars and widgets
     private GoogleMap mMap;

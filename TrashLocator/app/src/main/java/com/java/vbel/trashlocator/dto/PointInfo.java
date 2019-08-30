@@ -19,6 +19,9 @@ public class PointInfo {
     private String date;
 
 
+    @SerializedName("image")
+    private String image;
+
 
     public String getUserName() {
         return userName;
@@ -42,5 +45,13 @@ public class PointInfo {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }

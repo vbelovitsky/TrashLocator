@@ -51,7 +51,7 @@ public class ResultActivity extends AppCompatActivity implements CategoryAdapter
     private String strCoordinates;
     private String strLabels;
 
-    private String BASE_TEST_URL = "https://server-trash-optimizator.herokuapp.com/";
+    private String BASE_TEST_URL = "http://192.168.1.56:8080";
 
     private ConstraintLayout resultLayout;
     private TextView resultText;
@@ -232,7 +232,7 @@ public class ResultActivity extends AppCompatActivity implements CategoryAdapter
         long[] categoryImages = {R.drawable.trash_small, R.drawable.trash_mid, R.drawable.trash_big};
 
         //Инициализируем дефолтные значения
-        categoryId = 0;
+        categoryId = 1;
         categoryTitle = categoryTitles[0];
 
         //Заполняем массив категорий
